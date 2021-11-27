@@ -19,7 +19,9 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        #New dictionary
+        "hemispheres": image_urls(browser)
     }
 
     # Stop webdriver and return data
@@ -83,6 +85,7 @@ def featured_image(browser):
 
 def mars_facts():
     # Add try/except for error handling
+    
     try:
         # Use 'read_html' to scrape the facts table into a dataframe
         df = pd.read_html('https://data-class-mars-facts.s3.amazonaws.com/Mars_Facts/index.html')[0]
@@ -93,9 +96,62 @@ def mars_facts():
     # Assign columns and set index of dataframe
     df.columns=['Description', 'Mars', 'Earth']
     df.set_index('Description', inplace=True)
+   
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+def image_urls(browser):
+    url = 'https://marshemispheres.com/'
+
+    browser.visit(url)
+    html = browser.html
+    img_soup = soup(html, 'html.parser')
+
+
+    # In[165]:
+
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+
+    #make a loop, make a dictionary with keys img,title. access img_url, add it to dict, access title, add it to dict, append dict to list
+    # titles in h3, links click on <a href="/search/map/Mars/Viking/cerberus_enhanced" class="itemLink product-item"><h3>Cerberus Hemisphere Enhanced</h3></a>
+    #link in <a target="_blank" href="https://astropedia.astrogeology.usgs.gov/download/Mars/Viking/schiaparelli_enhanced.tif/full.jpg">Sample</a>
+
+
+
+    partial_url="https://marshemispheres.com/"
+    for i in range(4):
+        
+        title=img_soup.find_all("h3")
+        title=title[i].get_text()
+        clicky=browser.find_by_tag("img",wait_time=3)[i+3]
+        clicky.click()
+        
+        nu_html=browser.html
+        nu_soup = soup(nu_html, 'html.parser')
+        browser.is_element_present_by_css('div.list_text',wait_time=1)
+        sp_url= nu_soup.find_all("a")[3].get("href")
+
+        img_url=partial_url+sp_url
+        hemis_dict={"img_url":img_url,"title":title}
+        hemisphere_image_urls.append(hemis_dict)
+        browser.back()
+        
+        
+
+
+
+  
+
+
+    # 4. Print the list that holds the dictionary of each image url and title.
+    return hemisphere_image_urls
+
+
 
 if __name__ == "__main__":
 
